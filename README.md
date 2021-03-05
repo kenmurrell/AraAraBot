@@ -1,0 +1,2 @@
+# AraAraBot
+ Discord Bot
