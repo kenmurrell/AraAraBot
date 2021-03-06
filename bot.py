@@ -7,6 +7,8 @@ import os
 import sys
 import logging
 from datetime import datetime
+import typing
+import regex as re
 
 
 logger = logging.getLogger('main')
@@ -19,17 +21,25 @@ streamHandler.setFormatter(formatter)
 logger.addHandler(streamHandler)
 logger.setLevel(logging.INFO)
 
+YT_PATTERN = re.compile("https\:\/\/www\.youtube\.com\/watch\?v\=[a-zA-Z0-9\-\_]{11}")
 TOKEN = "ODE2MTM5MDA0NjQyNDU5NjU4.YD2mrQ.WdukyEdh20Wus6D7YXF0_I0nN5w"
-client = commands.Bot(command_prefix = "!")
+bot = commands.Bot(command_prefix = "!")
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 #SOUNDS
 SOUNDS_DIR = os.path.join(DIR_PATH, "sounds")
 SOUND_ARA_ARA = os.path.join(SOUNDS_DIR,"ara_ara.mp3")
+SOUND_ORG = os.path.join(SOUNDS_DIR,"org.mp3")
 
 #DOWNLOADS
 DL_DIR = os.path.join(DIR_PATH, "downloads")
 CACHE_DIR = os.path.join(DIR_PATH, "cache")
+
+USAGE_JOIN_CMD = "-> join the user's voice channel"
+USAGE_LEAVE_CMD = "-> leave the current voice channel"
+USAGE_PLAY_CMD =  "-> play the audio from a youtube video"
+USAGE_PAUSE_CMD = "-> pause/unpause the current playing video"
+USAGE_ORG_CMD = "-> ( ͡° ͜ʖ ͡°)"
 
 #MESSAGES
 MSG_JOINING_VOICE = "Joining the {channel} channel ＼(^ω^＼)"
@@ -37,12 +47,13 @@ MSG_LEAVING_VOICE = "Leaving the {channel} channel（ミ￣ー￣ミ)"
 MSG_PLAYING = "Playing... (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ \n{title}"
 MSG_PAUSING = "Paused... (/ω＼)	"
 MSG_RESUMING = "Resuming... °˖✧◝(⁰▿⁰)◜✧˖°	"
+MSG_ORG = "♡ σ(≧ε≦σ) ♡"
 
-ERROR_JOINING_VOICE = "{user}-chan, baka! You're not in a voice channel! ( ╥ω╥ )"
-ERROR_PLAYING = "{user}-chan, baka! I cannot play when I'm not in a voice channel! ( ╥ω╥ )"
+ERROR_USER_NOT_IN_VCHANNEL = "{user}-chan, baka! You're not in a voice channel! ( ╥ω╥ )"
+ERROR_BOT_NOT_IN_VCHANNEL = "{user}-chan, baka! I'm not in a voice channel! ( ╥ω╥ )"
+ERROR_PLAYING_INVALID_LINK = "{user}-chan, baka! I cannot play invalid youtube links! ( ╥ω╥ )"
 
-nhent_num_size = 6
-ydl_opts = {
+YDL_OPTS = {
     'format': 'bestaudio/best',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
@@ -57,59 +68,95 @@ ydl_opts = {
     'quiet': False
 }
 
-@client.event
+
+@bot.event
 async def on_ready():
-    print("Bot online.")
+    logger.info("Bot online!")
 
-@client.command(name="join", pass_context=True)
+
+@bot.event
+async def on_member_join(user):
+  logger.info("{user} joined the server".format(user=user))
+
+
+@bot.command(name="org", pass_context=True, usage=USAGE_ORG_CMD)
+async def org(ctx):
+    voice_client = ctx.voice_client
+    user = ctx.message.author.name
+    if not voice_client:
+        return
+    voice_client.play(discord.FFmpegPCMAudio(SOUND_ORG), after=None)
+    await ctx.send(content=MSG_ORG)
+    logger.info("{user} requested org".format(user=user))
+
+
+@bot.command(name="join", pass_context=True, usage=USAGE_JOIN_CMD)
 async def join(ctx):
-    user = ctx.message.author
-    voice = user.voice
-    if voice is None:
-        await ctx.send(content=ERROR_JOINING_VOICE.format(user=user.name))
-    else:
-        vchannel = voice.channel
-        await ctx.send(content=MSG_JOINING_VOICE.format(channel=vchannel.name))
-        vc = await vchannel.connect()
-        vc.play(discord.FFmpegPCMAudio(SOUND_ARA_ARA), after=None)
-        logger.info("{} requested join to {} channel".format(user.name, vchannel.name))
+    user = ctx.message.author.name
+    s_voice =  ctx.message.author.voice
+    if not s_voice:
+        await ctx.send(content=ERROR_USER_NOT_IN_VCHANNEL.format(user=user))
+        logger.error("{user} requested join to null channel".format(user=user))
+        return
+    s_channel = s_voice.channel
+    voice_client = await s_channel.connect()
+    voice_client.play(discord.FFmpegPCMAudio(SOUND_ARA_ARA), after=None)
+    await ctx.send(content=MSG_JOINING_VOICE.format(channel=s_channel))
+    logger.info("{user} requested join to {channel} channel".format(user=user, channel=s_channel))
 
-@client.command(name="leave", pass_context=True)
+
+@bot.command(name="leave", pass_context=True, usage=USAGE_LEAVE_CMD)
 async def leave(ctx):
-    user = ctx.message.author
-    await ctx.voice_client.disconnect()
-    tchannel = ctx.channel
-    await ctx.send(content=MSG_LEAVING_VOICE.format(channel=tchannel.name))
-    logger.info("{} request kick from {} channel".format(user.name, tchannel.name))
-
-@client.command(name="play", pass_context=True)
-async def play(ctx, url):
-    user = ctx.message.author
-    if ctx.voice_client is None:
-        await ctx.send(content=ERROR_PLAYING.format(user=user.name))
-    else:
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=False)
-            video_id = info_dict.get("id", None)
-            video_title = info_dict.get("title", None)
-            ydl.download([url])
-            await ctx.send(content=MSG_PLAYING.format(title=video_title))
-            video_path = os.path.join(DL_DIR, "{}.{}".format(video_id, "mp3")) #handle multiple extensions in the future
-            ctx.voice_client.play(discord.FFmpegPCMAudio(video_path), after=None)
-            logger.info("{user} requested song {id} - {title}".format(user=user.name, id=video_id, title=video_title))
+    user = ctx.message.author.name
+    voice_client = ctx.voice_client
+    if not voice_client:
+        await ctx.send(content=ERROR_BOT_NOT_IN_VCHANNEL.format(user=user))
+        logger.error("{user} requested leave a null channel".format(user=user))
+        return
+    vchannel = voice_client.channel.name
+    await voice_client.disconnect()
+    await ctx.send(content=MSG_LEAVING_VOICE.format(channel=vchannel))
+    logger.info("{user} request leave from {channel} channel".format(user=user, channel=vchannel))
 
 
-@client.command(name="pause", pass_context=True)
+@bot.command(name="play", pass_context=True, usage=USAGE_PLAY_CMD)
+async def play(ctx, *args):
+    user = ctx.message.author.name
+    if len(args) != 1 or not YT_PATTERN.match(args[0]):
+        await ctx.send(content=ERROR_PLAYING_INVALID_LINK.format(user=user))
+        logger.error("{user} requested to play a null link".format(user=user))
+        return
+    voice_client = ctx.voice_client
+    if not ctx.voice_client:
+        await ctx.send(content=ERROR_USER_NOT_IN_VCHANNEL.format(user=user))
+        return
+    with youtube_dl.YoutubeDL(YDL_OPTS) as ydl:
+        info_dict = ydl.extract_info(args[0], download=False)
+        video_id = info_dict.get("id", None)
+        video_title = info_dict.get("title", None)
+        ydl.download([args[0]])
+        await ctx.send(content=MSG_PLAYING.format(title=video_title))
+        video_path = os.path.join(DL_DIR, "{}.{}".format(video_id, "mp3")) #handle multiple extensions in the future
+        voice_client.play(discord.FFmpegPCMAudio(video_path), after=None)
+        logger.info("{user} requested song {id} - {title}".format(user=user, id=video_id, title=video_title))
+
+
+@bot.command(name="pause", pass_context=True, usage=USAGE_PAUSE_CMD)
 async def pause(ctx):
-    user = ctx.message.author
-    if ctx.voice_client.is_playing():
-        await ctx.send(content=MSG_PAUSING)
+    user = ctx.message.author.name
+    voice_client = ctx.voice_client
+    if not voice_client:
+        await ctx.send(content=ERROR_BOT_NOT_IN_VCHANNEL.format(user=user))
+        logger.error("{user} requested pause".format(user=user))
+        return
+    if voice_client.is_playing():
         ctx.voice_client.pause()
-        logger.info("{} paused the current song".format(user.name))
+        await ctx.send(content=MSG_PAUSING)
+        logger.info("{user} requested pause".format(user=user))
     else:
         await ctx.send(content=MSG_RESUMING)
         ctx.voice_client.resume()
-        logger.info("{} resumed the current song".format(user.name))
+        logger.info("{user} request unpause".format(user=user))
 
 
-client.run(TOKEN)
+bot.run(TOKEN)
