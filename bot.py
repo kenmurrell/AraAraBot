@@ -22,7 +22,7 @@ logger.addHandler(streamHandler)
 logger.setLevel(logging.INFO)
 
 YT_PATTERN = re.compile("https\:\/\/www\.youtube\.com\/watch\?v\=[a-zA-Z0-9\-\_]{11}")
-TOKEN = "ODE2MTM5MDA0NjQyNDU5NjU4.YD2mrQ.WdukyEdh20Wus6D7YXF0_I0nN5w"
+TOKEN = "ODE2MTM5MDA0NjQyNDU5NjU4.YD2mrQ.EtQmglt5Pp3EXWzvfk0CGef3bS4"
 bot = commands.Bot(command_prefix = "!")
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
