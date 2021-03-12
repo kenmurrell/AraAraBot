@@ -2,12 +2,14 @@ import discord
 import youtube_dl
 import asyncio
 from discord.ext import commands
+from discord.errors import ClientException
 import random as rand # using this because of weird abiguity
 import os
 import sys
 import logging
 from datetime import datetime
 import typing
+import yaml
 import regex as re
 
 
@@ -22,9 +24,17 @@ logger.addHandler(streamHandler)
 logger.setLevel(logging.INFO)
 
 YT_PATTERN = re.compile("https\:\/\/www\.youtube\.com\/watch\?v\=[a-zA-Z0-9\-\_]{11}")
-TOKEN = "ODE2MTM5MDA0NjQyNDU5NjU4.YD2mrQ.EtQmglt5Pp3EXWzvfk0CGef3bS4"
 bot = commands.Bot(command_prefix = "!")
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+
+TOKEN = None
+with open("config.yaml") as configfile:
+    try:
+        yaml_ob = yaml.load(configfile, Loader=yaml.FullLoader)
+        TOKEN = yaml_ob["TOKEN"]
+    except KeyError:
+        logger.error("Discord key not found, exiting")
+
 
 #SOUNDS
 SOUNDS_DIR = os.path.join(DIR_PATH, "sounds")
@@ -85,12 +95,16 @@ async def org(ctx):
     user = ctx.message.author.name
     if not voice_client:
         return
-    voice_client.play(discord.FFmpegPCMAudio(SOUND_ORG), after=None)
-    await ctx.send(content=MSG_ORG)
-    logger.info("{user} requested org".format(user=user))
+    try:
+        voice_client.play(discord.FFmpegPCMAudio(SOUND_ORG), after=None)
+        await ctx.send(content=MSG_ORG)
+        logger.info("{user} requested org".format(user=user))
+    except ClientException as ex:
+        logger.error("Error requesting org: {err}".format(err=ex))
 
 
-@bot.command(name="join", pass_context=True, usage=USAGE_JOIN_CMD)
+
+@bot.command(name="join", aliases=["j"], pass_context=True, usage=USAGE_JOIN_CMD)
 async def join(ctx):
     user = ctx.message.author.name
     s_voice =  ctx.message.author.voice
@@ -105,7 +119,7 @@ async def join(ctx):
     logger.info("{user} requested join to {channel} channel".format(user=user, channel=s_channel))
 
 
-@bot.command(name="leave", pass_context=True, usage=USAGE_LEAVE_CMD)
+@bot.command(name="leave", aliases=["kick", "exit"], pass_context=True, usage=USAGE_LEAVE_CMD)
 async def leave(ctx):
     user = ctx.message.author.name
     voice_client = ctx.voice_client
@@ -116,10 +130,10 @@ async def leave(ctx):
     vchannel = voice_client.channel.name
     await voice_client.disconnect()
     await ctx.send(content=MSG_LEAVING_VOICE.format(channel=vchannel))
-    logger.info("{user} request leave from {channel} channel".format(user=user, channel=vchannel))
+    logger.info("{user} requested leave from {channel} channel".format(user=user, channel=vchannel))
 
 
-@bot.command(name="play", pass_context=True, usage=USAGE_PLAY_CMD)
+@bot.command(name="play", aliases=["run", "pl"], pass_context=True, usage=USAGE_PLAY_CMD)
 async def play(ctx, *args):
     user = ctx.message.author.name
     if len(args) != 1 or not YT_PATTERN.match(args[0]):
@@ -129,6 +143,7 @@ async def play(ctx, *args):
     voice_client = ctx.voice_client
     if not ctx.voice_client:
         await ctx.send(content=ERROR_USER_NOT_IN_VCHANNEL.format(user=user))
+        logger.error("{user} requested play but not in voice channel".format(user=user))
         return
     with youtube_dl.YoutubeDL(YDL_OPTS) as ydl:
         info_dict = ydl.extract_info(args[0], download=False)
@@ -137,11 +152,13 @@ async def play(ctx, *args):
         ydl.download([args[0]])
         await ctx.send(content=MSG_PLAYING.format(title=video_title))
         video_path = os.path.join(DL_DIR, "{}.{}".format(video_id, "mp3")) #handle multiple extensions in the future
-        voice_client.play(discord.FFmpegPCMAudio(video_path), after=None)
-        logger.info("{user} requested song {id} - {title}".format(user=user, id=video_id, title=video_title))
+        try:
+            voice_client.play(discord.FFmpegPCMAudio(video_path), after=None)
+            logger.info("{user} requested song {id} - {title}".format(user=user, id=video_id, title=video_title))
+        except ClientException as ex:
+            logger.error("Error requesting org: {err}".format(err=ex))
 
-
-@bot.command(name="pause", pass_context=True, usage=USAGE_PAUSE_CMD)
+@bot.command(name="pause", aliases=["st", "stop", "yamete"], pass_context=True, usage=USAGE_PAUSE_CMD)
 async def pause(ctx):
     user = ctx.message.author.name
     voice_client = ctx.voice_client
@@ -156,7 +173,7 @@ async def pause(ctx):
     else:
         await ctx.send(content=MSG_RESUMING)
         ctx.voice_client.resume()
-        logger.info("{user} request unpause".format(user=user))
+        logger.info("{user} requested unpause".format(user=user))
 
 
 bot.run(TOKEN)
