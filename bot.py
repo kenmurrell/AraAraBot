@@ -3,7 +3,6 @@ import youtube_dl
 import asyncio
 from discord.ext import commands
 from discord.errors import ClientException
-import random as rand # using this because of weird abiguity
 import os
 import sys
 import logging
@@ -12,7 +11,7 @@ import typing
 import yaml
 import regex as re
 
-
+#LOGGING
 logger = logging.getLogger('main')
 fileHandler = logging.FileHandler('{:%Y-%m-%d}.log'.format(datetime.now()))
 formatter = logging.Formatter('%(asctime)s | %(levelname)-8s | %(lineno)04d | %(message)s')
@@ -27,16 +26,10 @@ YT_PATTERN = re.compile("https\:\/\/www\.youtube\.com\/watch\?v\=[a-zA-Z0-9\-\_]
 bot = commands.Bot(command_prefix = "!")
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
-TOKEN = None
-with open("config.yaml") as configfile:
-    try:
-        yaml_ob = yaml.load(configfile, Loader=yaml.FullLoader)
-        TOKEN = yaml_ob["TOKEN"]
-    except KeyError:
-        logger.error("Discord key not found, exiting")
+yaml_ob = None
+with open("config.yaml", encoding="utf-8") as configfile:
+    yaml_ob = yaml.load(configfile, Loader=yaml.FullLoader)
 
-
-#SOUNDS
 SOUNDS_DIR = os.path.join(DIR_PATH, "sounds")
 SOUND_ARA_ARA = os.path.join(SOUNDS_DIR,"ara_ara.mp3")
 SOUND_ORG = os.path.join(SOUNDS_DIR,"org.mp3")
@@ -45,38 +38,33 @@ SOUND_ORG = os.path.join(SOUNDS_DIR,"org.mp3")
 DL_DIR = os.path.join(DIR_PATH, "downloads")
 CACHE_DIR = os.path.join(DIR_PATH, "cache")
 
-USAGE_JOIN_CMD = "-> join the user's voice channel"
-USAGE_LEAVE_CMD = "-> leave the current voice channel"
-USAGE_PLAY_CMD =  "-> play the audio from a youtube video"
-USAGE_PAUSE_CMD = "-> pause/unpause the current playing video"
-USAGE_ORG_CMD = "-> ( ͡° ͜ʖ ͡°)"
+#TOKEN
+TOKEN = yaml_ob["AUTH"]["TOKEN"]
+
+#DOCS
+DOCS_JOIN = yaml_ob["DOCS"]["JOIN"]
+DOCS_LEAVE = yaml_ob["DOCS"]["LEAVE"]
+DOCS_PLAY =  yaml_ob["DOCS"]["PLAY"]
+DOCS_PAUSE = yaml_ob["DOCS"]["PAUSE"]
+DPCS_ORG = yaml_ob["DOCS"]["ORG"]
 
 #MESSAGES
-MSG_JOINING_VOICE = "Joining the {channel} channel ＼(^ω^＼)"
-MSG_LEAVING_VOICE = "Leaving the {channel} channel（ミ￣ー￣ミ)"
-MSG_PLAYING = "Playing... (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ \n{title}"
-MSG_PAUSING = "Paused... (/ω＼)	"
-MSG_RESUMING = "Resuming... °˖✧◝(⁰▿⁰)◜✧˖°	"
-MSG_ORG = "♡ σ(≧ε≦σ) ♡"
+MSG_JOINING_VOICE = yaml_ob["MESSAGES"]["JOINING_VOICE"]
+MSG_LEAVING_VOICE = yaml_ob["MESSAGES"]["LEAVING_VOICE"]
+MSG_PLAYING = yaml_ob["MESSAGES"]["PLAYING"]
+MSG_PAUSING = yaml_ob["MESSAGES"]["PAUSING"]
+MSG_RESUMING = yaml_ob["MESSAGES"]["RESUMING"]
+MSG_ORG = yaml_ob["MESSAGES"]["ORG"]
 
-ERROR_USER_NOT_IN_VCHANNEL = "{user}-chan, baka! You're not in a voice channel! ( ╥ω╥ )"
-ERROR_BOT_NOT_IN_VCHANNEL = "{user}-chan, baka! I'm not in a voice channel! ( ╥ω╥ )"
-ERROR_PLAYING_INVALID_LINK = "{user}-chan, baka! I cannot play invalid youtube links! ( ╥ω╥ )"
+#ERRORS
+ERROR_USER_NOT_IN_VCHANNEL = yaml_ob["ERRORS"]["USER_NOT_IN_VCHANNEL"]
+ERROR_BOT_NOT_IN_VCHANNEL = yaml_ob["ERRORS"]["BOT_NOT_IN_VCHANNEL"]
+ERROR_PLAYING_INVALID_LINK = yaml_ob["ERRORS"]["PLAYING_INVALID_LINK"]
 
-YDL_OPTS = {
-    'format': 'bestaudio/best',
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }],
-    "retries": 3,
-    "restrict-filenames": True,
-    "cache-dir": CACHE_DIR,
-    "no-playlist": True,
-    'outtmpl': os.path.join(DL_DIR, '%(id)s.%(etx)s'),
-    'quiet': False
-}
+#YOUTUBE DOWNLOADER OPTIONS
+YD_DL_OPTS = yaml_ob["YD_DL_OPTS"]
+YD_DL_OPTS["outtmpl"] = os.path.join(DL_DIR, '%(id)s.%(etx)s')
+YD_DL_OPTS["download_archive"] = os.path.join(DL_DIR, "archive.txt")
 
 
 @bot.event
@@ -89,7 +77,7 @@ async def on_member_join(user):
   logger.info("{user} joined the server".format(user=user))
 
 
-@bot.command(name="org", pass_context=True, usage=USAGE_ORG_CMD)
+@bot.command(name="org", pass_context=True, usage=DPCS_ORG)
 async def org(ctx):
     voice_client = ctx.voice_client
     user = ctx.message.author.name
@@ -103,8 +91,7 @@ async def org(ctx):
         logger.error("Error requesting org: {err}".format(err=ex))
 
 
-
-@bot.command(name="join", aliases=["j"], pass_context=True, usage=USAGE_JOIN_CMD)
+@bot.command(name="join", aliases=["j"], pass_context=True, usage=DOCS_JOIN)
 async def join(ctx):
     user = ctx.message.author.name
     s_voice =  ctx.message.author.voice
@@ -119,7 +106,7 @@ async def join(ctx):
     logger.info("{user} requested join to {channel} channel".format(user=user, channel=s_channel))
 
 
-@bot.command(name="leave", aliases=["kick", "exit"], pass_context=True, usage=USAGE_LEAVE_CMD)
+@bot.command(name="leave", aliases=["kick", "exit"], pass_context=True, usage=DOCS_LEAVE)
 async def leave(ctx):
     user = ctx.message.author.name
     voice_client = ctx.voice_client
@@ -133,7 +120,7 @@ async def leave(ctx):
     logger.info("{user} requested leave from {channel} channel".format(user=user, channel=vchannel))
 
 
-@bot.command(name="play", aliases=["run", "pl"], pass_context=True, usage=USAGE_PLAY_CMD)
+@bot.command(name="play", aliases=["run", "pl"], pass_context=True, usage=DOCS_PLAY)
 async def play(ctx, *args):
     user = ctx.message.author.name
     if len(args) != 1 or not YT_PATTERN.match(args[0]):
@@ -145,7 +132,7 @@ async def play(ctx, *args):
         await ctx.send(content=ERROR_USER_NOT_IN_VCHANNEL.format(user=user))
         logger.error("{user} requested play but not in voice channel".format(user=user))
         return
-    with youtube_dl.YoutubeDL(YDL_OPTS) as ydl:
+    with youtube_dl.YoutubeDL(YD_DL_OPTS) as ydl:
         info_dict = ydl.extract_info(args[0], download=False)
         video_id = info_dict.get("id", None)
         video_title = info_dict.get("title", None)
@@ -158,7 +145,8 @@ async def play(ctx, *args):
         except ClientException as ex:
             logger.error("Error requesting org: {err}".format(err=ex))
 
-@bot.command(name="pause", aliases=["st", "stop", "yamete"], pass_context=True, usage=USAGE_PAUSE_CMD)
+
+@bot.command(name="pause", aliases=["st", "stop", "yamete"], pass_context=True, usage=DOCS_PAUSE)
 async def pause(ctx):
     user = ctx.message.author.name
     voice_client = ctx.voice_client

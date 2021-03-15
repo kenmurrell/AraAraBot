@@ -1,1 +1,38 @@
-TOKEN: 
+#AUTHENTICATION
+AUTH:
+  TOKEN: "" ### ADD YOUR DISCORD KEY HERE!!! ###
+
+#COMMANDS
+DOCS:
+  JOIN: "-> join the user's voice channel"
+  LEAVE: "-> leave the current voice channel"
+  PLAY:  "-> play the audio from a youtube video"
+  PAUSE: "-> pause/unpause the current playing video"
+  ORG: "-> ( ͡° ͜ʖ ͡°)"
+
+#MESSAGES
+MESSAGES:
+  JOINING_VOICE: "Joining the {channel} channel ＼(^ω^＼)"
+  LEAVING_VOICE: "Leaving the {channel} channel（ミ￣ー￣ミ)"
+  PLAYING: "Playing... (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ \n{title}"
+  PAUSING: "Paused... (/ω＼)	"
+  RESUMING: "Resuming... °˖✧◝(⁰▿⁰)◜✧˖°	"
+  ORG: "♡ σ(≧ε≦σ) ♡"
+
+#ERRORS
+ERRORS:
+  USER_NOT_IN_VCHANNEL: "{user}-chan, baka! You're not in a voice channel! ( ╥ω╥ )"
+  BOT_NOT_IN_VCHANNEL: "{user}-chan, baka! I'm not in a voice channel! ( ╥ω╥ )"
+  PLAYING_INVALID_LINK: "{user}-chan, baka! I cannot play invalid youtube links! ( ╥ω╥ )"
+
+#YOUTUBE DOWNLOADER OPTIONS
+YD_DL_OPTS:
+  format: bestaudio/best
+  postprocessors:
+    - key: "FFmpegExtractAudio"
+      preferredcodec: "mp3"
+      preferredquality: "192"
+  "retries": 3
+  "restrict-filenames": True
+  "no-playlist": True
+  'quiet': False
