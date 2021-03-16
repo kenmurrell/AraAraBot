@@ -10,6 +10,7 @@ from datetime import datetime
 import typing
 import yaml
 import regex as re
+from playlist import Playlist, Track
 
 #LOGGING
 logger = logging.getLogger('main')
@@ -22,21 +23,17 @@ streamHandler.setFormatter(formatter)
 logger.addHandler(streamHandler)
 logger.setLevel(logging.INFO)
 
-YT_PATTERN = re.compile("https\:\/\/www\.youtube\.com\/watch\?v\=[a-zA-Z0-9\-\_]{11}")
-bot = commands.Bot(command_prefix = "!")
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-
 yaml_ob = None
 with open("config.yaml", encoding="utf-8") as configfile:
     yaml_ob = yaml.load(configfile, Loader=yaml.FullLoader)
 
+#PATHS
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+DL_DIR = os.path.join(DIR_PATH, "downloads")
+CACHE_DIR = os.path.join(DIR_PATH, "cache")
 SOUNDS_DIR = os.path.join(DIR_PATH, "sounds")
 SOUND_ARA_ARA = os.path.join(SOUNDS_DIR,"ara_ara.mp3")
 SOUND_ORG = os.path.join(SOUNDS_DIR,"org.mp3")
-
-#DOWNLOADS
-DL_DIR = os.path.join(DIR_PATH, "downloads")
-CACHE_DIR = os.path.join(DIR_PATH, "cache")
 
 #TOKEN
 TOKEN = yaml_ob["AUTH"]["TOKEN"]
@@ -65,6 +62,10 @@ ERROR_PLAYING_INVALID_LINK = yaml_ob["ERRORS"]["PLAYING_INVALID_LINK"]
 YD_DL_OPTS = yaml_ob["YD_DL_OPTS"]
 YD_DL_OPTS["outtmpl"] = os.path.join(DL_DIR, '%(id)s.%(etx)s')
 YD_DL_OPTS["download_archive"] = os.path.join(DL_DIR, "archive.txt")
+
+YT_PATTERN = re.compile("https\:\/\/www\.youtube\.com\/watch\?v\=[a-zA-Z0-9\-\_]{11}")
+playlist = Playlist(20)
+bot = commands.Bot(command_prefix = "!")
 
 
 @bot.event
@@ -132,18 +133,25 @@ async def play(ctx, *args):
         await ctx.send(content=ERROR_USER_NOT_IN_VCHANNEL.format(user=user))
         logger.error("{user} requested play but not in voice channel".format(user=user))
         return
+    try:
+        track = create_track(args[0])
+        voice_client.play(discord.FFmpegPCMAudio(track.filename), after=None)
+        await ctx.send(content=MSG_PLAYING.format(track=str(track)))
+        logger.info("{user} requested song {trackdt}".format(user=user, trackdt=track.details()))
+    except ClientException as ex:
+        logger.error("Error requesting org: {err}".format(err=ex))
+
+
+def create_track(url):
     with youtube_dl.YoutubeDL(YD_DL_OPTS) as ydl:
-        info_dict = ydl.extract_info(args[0], download=False)
+        info_dict = ydl.extract_info(url, download=False)
         video_id = info_dict.get("id", None)
         video_title = info_dict.get("title", None)
-        ydl.download([args[0]])
-        await ctx.send(content=MSG_PLAYING.format(title=video_title))
-        video_path = os.path.join(DL_DIR, "{}.{}".format(video_id, "mp3")) #handle multiple extensions in the future
-        try:
-            voice_client.play(discord.FFmpegPCMAudio(video_path), after=None)
-            logger.info("{user} requested song {id} - {title}".format(user=user, id=video_id, title=video_title))
-        except ClientException as ex:
-            logger.error("Error requesting org: {err}".format(err=ex))
+        video_duration = info_dict.get("duration", None)
+        ydl.download([url])
+        video_path = os.path.join(DL_DIR, "{}.{}".format(video_id, "mp3"))
+        track = Track(video_id, video_title, url, video_duration, video_path)
+        return track
 
 
 @bot.command(name="pause", aliases=["st", "stop", "yamete"], pass_context=True, usage=DOCS_PAUSE)

@@ -14,7 +14,7 @@ DOCS:
 MESSAGES:
   JOINING_VOICE: "Joining the {channel} channel ＼(^ω^＼)"
   LEAVING_VOICE: "Leaving the {channel} channel（ミ￣ー￣ミ)"
-  PLAYING: "Playing... (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ \n{title}"
+  PLAYING: "Playing... (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ \n{track}"
   PAUSING: "Paused... (/ω＼)	"
   RESUMING: "Resuming... °˖✧◝(⁰▿⁰)◜✧˖°	"
   ORG: "♡ σ(≧ε≦σ) ♡"
