@@ -143,15 +143,18 @@ async def play(ctx, *args):
 
 
 def create_track(url):
-    with youtube_dl.YoutubeDL(YD_DL_OPTS) as ydl:
-        info_dict = ydl.extract_info(url, download=False)
-        video_id = info_dict.get("id", None)
-        video_title = info_dict.get("title", None)
-        video_duration = info_dict.get("duration", None)
-        ydl.download([url])
-        video_path = os.path.join(DL_DIR, "{}.{}".format(video_id, "mp3"))
-        track = Track(video_id, video_title, url, video_duration, video_path)
-        return track
+    try:
+        with youtube_dl.YoutubeDL(YD_DL_OPTS) as ydl:
+            info_dict = ydl.extract_info(url, download=False)
+            video_id = info_dict.get("id", None)
+            video_title = info_dict.get("title", None)
+            video_duration = info_dict.get("duration", None)
+            ydl.download([url])
+            video_path = os.path.join(DL_DIR, "{}.{}".format(video_id, "mp3"))
+            track = Track(video_id, video_title, url, video_duration, video_path)
+            return track
+    except youtube_dl.DownloadError as ex:
+        logger.error("Error requesting org: {err}".format(err=ex))
 
 
 @bot.command(name="pause", aliases=["st", "stop", "yamete"], pass_context=True, usage=DOCS_PAUSE)

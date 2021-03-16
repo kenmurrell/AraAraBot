@@ -38,15 +38,12 @@ class Track(object):
 
     def details(self):
         return "({duration})({id})[{title}](url={url})".format(
-            duration=self.timestr(),
+            duration=timedelta(seconds=self.duration),
             id=self.id,
             title=self.title,
             url=self.url)
 
-    def timestr(self):
-        return timedelta(seconds=self.duration)
-
     def __str__(self):
         return "({duration})[{title}]".format(
-            duration=self.timestr(),
+            duration=timedelta(seconds=self.duration),
             title=self.title)
