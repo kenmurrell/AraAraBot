@@ -4,10 +4,12 @@ AUTH:
 
 #COMMANDS
 DOCS:
-  JOIN: "-> join the user's voice channel"
-  LEAVE: "-> leave the current voice channel"
-  PLAY:  "-> play the audio from a youtube video"
+  JOIN: "-> joins the user's voice channel"
+  LEAVE: "-> leaves the current voice channel"
+  PLAY:  "-> plays the given youtube video or the first item in the queue"
   PAUSE: "-> pause/unpause the current playing video"
+  QUEUE: "-> queues up the given youtube video"
+  CLEAR: "-> clears the queue"
   ORG: "-> ( ͡° ͜ʖ ͡°)"
 
 #MESSAGES
@@ -17,6 +19,8 @@ MESSAGES:
   PLAYING: "Playing... (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ \n{track}"
   PAUSING: "Paused... (/ω＼)	"
   RESUMING: "Resuming... °˖✧◝(⁰▿⁰)◜✧˖°	"
+  QUEUING: "Queuing... (>ω^) \n{track}"
+  CLEARING: "Clearing the queue... ( ╯°□°)╯ ┻━━┻"
   ORG: "♡ σ(≧ε≦σ) ♡"
 
 #ERRORS
@@ -24,6 +28,7 @@ ERRORS:
   USER_NOT_IN_VCHANNEL: "{user}-chan, baka! You're not in a voice channel! ( ╥ω╥ )"
   BOT_NOT_IN_VCHANNEL: "{user}-chan, baka! I'm not in a voice channel! ( ╥ω╥ )"
   PLAYING_INVALID_LINK: "{user}-chan, baka! I cannot play invalid youtube links! ( ╥ω╥ )"
+  EMPTY_QUEUE: "{user}-chan, baka! You didn't give me a youtube linke and the queue is empty ( ╥ω╥ )"
 
 #YOUTUBE DOWNLOADER OPTIONS
 YD_DL_OPTS:
