@@ -2,15 +2,9 @@
 AUTH:
   TOKEN: ### ADD YOUR DISCORD KEY HERE!!! ###
 
-#COMMANDS
-DOCS:
-  JOIN: "-> joins the user's voice channel"
-  LEAVE: "-> leaves the current voice channel"
-  PLAY:  "-> plays the given youtube video or the first item in the queue"
-  PAUSE: "-> pause/unpause the current playing video"
-  QUEUE: "-> queues up the given youtube video"
-  CLEAR: "-> clears the queue"
-  ORG: "-> ( ͡° ͜ʖ ͡°)"
+#META
+META:
+  PREFIX: "!"
 
 #MESSAGES
 MESSAGES:
