@@ -6,14 +6,14 @@ import os
 import sys
 import logging
 from datetime import datetime
-import typing
 import yaml
 import regex as re
 from playlist import Playlist, Track
 
 # LOGGING
 logger = logging.getLogger('main')
-fileHandler = logging.FileHandler('{:%Y-%m-%d}.log'.format(datetime.now()))
+logFile = os.path.join("logs", '{:%Y-%m-%d}.log'.format(datetime.now()))
+fileHandler = logging.FileHandler(logFile)
 formatter = logging.Formatter('%(asctime)s | %(levelname)-8s | %(lineno)04d | %(message)s')
 fileHandler.setFormatter(formatter)
 logger.addHandler(fileHandler)
