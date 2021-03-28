@@ -6,3 +6,5 @@ mv ffmpeg.exe ../ && cd ..
 mv ffmpeg.exe ../ && cd ..
 rm ffmpeg-release-essentials.zip
 rm -r ffmpeg
+mkdir -p downloads
+mkdir -p logs
