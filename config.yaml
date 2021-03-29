@@ -1,21 +1,25 @@
 #AUTHENTICATION
 AUTH:
-  TOKEN: ### ADD YOUR DISCORD KEY HERE!!! ###
+  TOKEN: "" ### ADD YOUR DISCORD KEY HERE!!! ###
 
 #META
 META:
   PREFIX: "!"
+  SKIP_LIMIT: 2
+  PLAYLIST_LIMIT: 100
 
 #MESSAGES
 MESSAGES:
-  JOINING_VOICE: "Joining the {channel} channel ＼(^ω^＼)"
-  LEAVING_VOICE: "Leaving the {channel} channel（ミ￣ー￣ミ)"
+  JOINING_VOICE: "Joining the {channel} channel... ＼(^ω^＼)"
+  LEAVING_VOICE: "Leaving the {channel} channel...（ミ￣ー￣ミ)"
   PLAYING: "Playing... (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ \n{track}"
   PAUSING: "Paused... (/ω＼)	"
   RESUMING: "Resuming... °˖✧◝(⁰▿⁰)◜✧˖°	"
   QUEUING: "Queuing... (>ω^) \n{track}"
   CLEARING: "Clearing the queue... ( ╯°□°)╯ ┻━━┻"
   ORG: "♡ σ(≧ε≦σ) ♡"
+  SKIP_REQUEST: "{user} requested a skip... ┐(￣∀￣)┌ ({status})"
+  SKIP_SUCCESS: "Skipping song... ┐('～`;)┌"
 
 #ERRORS
 ERRORS:

@@ -11,7 +11,7 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 LOGS_PATH = os.path.join(DIR_PATH, "logs")
 
 logger = logging.getLogger('bot')
-fileHandler = logging.FileHandler(os.path.join(LOGS_PATH, '{:%Y-%m-%d}.log'.format(datetime.now())))
+fileHandler = logging.FileHandler(os.path.join(LOGS_PATH, '{:%Y-%m-%d}.log'.format(datetime.now())), encoding="utf-8")
 formatter = logging.Formatter('%(asctime)s | %(levelname)-8s | %(lineno)04d | %(message)s')
 fileHandler.setFormatter(formatter)
 logger.addHandler(fileHandler)

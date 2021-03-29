@@ -33,4 +33,5 @@ $ python3 bot.py
 * `!clearqueue`: clear the queue.
 * `!pause`: pause/unpause the currently playing music.
 * `!uptime`: show the current uptime of the bot.
+* `!skip`: vote to skip the current track
 

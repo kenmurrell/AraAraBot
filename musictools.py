@@ -6,7 +6,7 @@ from datetime import timedelta
 class Playlist(object):
 
     def __init__(self, limit=100):
-        self.limit = 100
+        self.limit = limit
         self.playque = deque()
 
     def __len__(self):
@@ -22,6 +22,9 @@ class Playlist(object):
         if len(self.playque) == 0:
             return None
         return self.playque.popleft()
+
+    def isempty(self):
+        return len(self) == 0
 
     def clear(self):
         self.playque.clear()
@@ -47,3 +50,25 @@ class Track(object):
         return "({duration})[{title}]".format(
             duration=timedelta(seconds=self.duration),
             title=self.title)
+
+
+class Skip(object):
+
+    def __init__(self, limit=2):
+        self.limit = limit
+        self.register = set()
+
+    def add(self, user) -> bool:
+        if user in self.register:
+            return False
+        self.register.add(user)
+        return True
+
+    def clear(self):
+        self.register.clear()
+
+    def ready(self) -> bool:
+        return len(self.register) >= self.limit
+
+    def status(self):
+        return "{votes} votes, {limit} needed".format(votes=len(self.register), limit=self.limit)

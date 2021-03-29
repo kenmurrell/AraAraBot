@@ -5,16 +5,17 @@ import regex as re
 import youtube_dl
 from discord.errors import ClientException
 from discord.ext import commands
-from playlist import Playlist, Track
+from musictools import Playlist, Track, Skip
 
 # DOCUMENTATION
 DOCS_JOIN = "-> joins the user's voice channel"
 DOCS_LEAVE = "-> leaves the current voice channel"
 DOCS_PLAY = "-> plays the given youtube video or the first item in the queue"
-DOCS_PAUSE = "-> pause/unpause the current playing video"
-DOCS_QUEUE = "-> queues up the given youtube video"
+DOCS_PAUSE = "-> pause/unpause the current song"
+DOCS_QUEUE = "-> queues up the given song"
 DOCS_CLEAR = "-> clears the queue"
 DOCS_ORG = "-> ( ͡° ͜ʖ ͡°)"
+DOCS_SKIP = "-> vote to skip the current song"
 
 # PATHS
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -32,7 +33,8 @@ class Music(commands.Cog):
     def __init__(self, bot, config):
         self.bot = bot
         self.config = config
-        self.playlist = Playlist(20)
+        self.playlist = Playlist(int(config["META"]["PLAYLIST_LIMIT"]))
+        self.skip = Skip(int(config["META"]["SKIP_LIMIT"]))
         self.config["YD_DL_OPTS"]["outtmpl"] = os.path.join(DL_DIR, '%(id)s.%(etx)s')
         self.config["YD_DL_OPTS"]["download_archive"] = os.path.join(DL_DIR, "archive.txt")
 
@@ -41,13 +43,13 @@ class Music(commands.Cog):
         voice_client = ctx.voice_client
         user = ctx.message.author.name
         if not voice_client:
-            await ctx.send(content=self.config["ERRORS"]["USER_NOT_IN_VCHANNEL"].format(user=user))
             logger.error("{user} requested org but bot not in voice channel".format(user=user))
+            await ctx.send(content=self.config["ERRORS"]["USER_NOT_IN_VCHANNEL"].format(user=user))
             return
         try:
             voice_client.play(discord.FFmpegPCMAudio(SOUND_ORG), after=None)
-            await ctx.send(content=self.config["MESSAGES"]["ORG"])
             logger.info("{user} requested org".format(user=user))
+            await ctx.send(content=self.config["MESSAGES"]["ORG"])
         except ClientException as ex:
             logger.error("Error requesting org: {err}".format(err=ex))
 
@@ -56,8 +58,8 @@ class Music(commands.Cog):
         user = ctx.message.author.name
         s_voice = ctx.message.author.voice
         if not s_voice:
-            await ctx.send(content=self.config["ERRORS"]["USER_NOT_IN_VCHANNEL"].format(user=user))
             logger.error("{user} requested join to null channel".format(user=user))
+            await ctx.send(content=self.config["ERRORS"]["USER_NOT_IN_VCHANNEL"].format(user=user))
             raise HandledBotError("not in channel")
         s_channel = s_voice.channel
         voice_client = await s_channel.connect()
@@ -70,32 +72,31 @@ class Music(commands.Cog):
         user = ctx.message.author.name
         voice_client = ctx.voice_client
         if not voice_client:
-            await ctx.send(content=self.config["ERRORS"]["BOT_NOT_IN_VCHANNEL"].format(user=user))
             logger.error("{user} requested leave a null channel".format(user=user))
+            await ctx.send(content=self.config["ERRORS"]["BOT_NOT_IN_VCHANNEL"].format(user=user))
             return
         vchannel = voice_client.channel.name
+        logger.info("{user} requested leave from {channel} channel".format(user=user, channel=vchannel))
         await voice_client.disconnect()
         await ctx.send(content=self.config["MESSAGES"]["LEAVING_VOICE"].format(channel=vchannel))
-        logger.info("{user} requested leave from {channel} channel".format(user=user, channel=vchannel))
 
     @commands.command(name="play", aliases=["run", "pl"], pass_context=True, usage=DOCS_PLAY)
     async def play(self, ctx, *args):
         user = ctx.message.author.name
-        voice_client = ctx.voice_client
         if not ctx.voice_client:
-            await ctx.send(content=self.config["ERRORS"]["USER_NOT_IN_VCHANNEL"].format(user=user))
             logger.error("{user} requested play but bot not in voice channel".format(user=user))
+            await ctx.send(content=self.config["ERRORS"]["USER_NOT_IN_VCHANNEL"].format(user=user))
             return
         if len(args) == 0 and len(self.playlist) == 0:
-            await ctx.send(content=self.config["ERRORS"]["EMPTY_QUEUE"].format(user=user))
             logger.error("{user} requested play but no song and playlist empty".format(user=user))
+            await ctx.send(content=self.config["ERRORS"]["EMPTY_QUEUE"].format(user=user))
         elif len(self.playlist) > 0:
-            self._play_music(ctx, voice_client, track=self.playlist.next())
+            self._play_music(ctx, track=self.playlist.next())
         else:
             try:
                 track = self._create_track(args[0])
                 logger.info("{user} played song {trackdt}".format(user=user, trackdt=track.details()))
-                self._play_music(ctx, voice_client, track)
+                self._play_music(ctx, track)
                 await ctx.send(content=self.config["MESSAGES"]["PLAYING"].format(track=str(track)))
             except ClientException as ex:
                 logger.error("Error requesting org: {err}".format(err=ex))
@@ -133,22 +134,43 @@ class Music(commands.Cog):
         user = ctx.message.author.name
         voice_client = ctx.voice_client
         if not voice_client:
-            await ctx.send(content=self.config["ERRORS"]["BOT_NOT_IN_VCHANNEL"].format(user=user))
             logger.error("{user} requested pause".format(user=user))
+            await ctx.send(content=self.config["ERRORS"]["BOT_NOT_IN_VCHANNEL"].format(user=user))
             return
         if voice_client.is_playing():
             ctx.voice_client.pause()
-            await ctx.send(content=self.config["MESSAGES"]["PAUSING"])
             logger.info("{user} requested pause".format(user=user))
+            await ctx.send(content=self.config["MESSAGES"]["PAUSING"])
         else:
-            await ctx.send(content=self.config["MESSAGES"]["RESUMING"])
             ctx.voice_client.resume()
             logger.info("{user} requested unpause".format(user=user))
+            await ctx.send(content=self.config["MESSAGES"]["RESUMING"])
 
-    def _play_music(self, ctx, voice_client, track):
+    @commands.command(name="skip", pass_context=True, usage=DOCS_SKIP)
+    async def skip(self, ctx):
+        user = ctx.message.author.name
+        voice_client = ctx.voice_client
+        if not voice_client or not voice_client.is_playing():
+            return
+        if self.skip.add(user):
+            logger.info("{user} requested skip ({status})".format(user=user, status=self.skip.status()))
+            await ctx.send(content=self.config["MESSAGES"]["SKIP_REQUEST"].format(user=user, status=self.skip.status()))
+            if self.skip.ready():
+                logger.info("Vote limit reached, skipping song".format(user=user))
+                await ctx.send(content=self.config["MESSAGES"]["SKIP_SUCCESS"])
+                if self.playlist.isempty():
+                    voice_client.stop()
+                else:
+                    voice_client.stop()
+                    self._play_music(ctx, self.playlist.next())
+
+    def _play_music(self, ctx, track):
+        self.skip.clear()
+        voice_client = ctx.voice_client
+
         def after_playing(err):
             if len(self.playlist) > 0:
-                self._play_music(ctx, voice_client, self.playlist.next())
+                self._play_music(ctx, self.playlist.next())
 
         # await ctx.send(content=self.config["MESSAGES"]["PLAYING"].format(track=str(track)))
         voice_client.play(discord.FFmpegPCMAudio(track.filename), after=after_playing)
