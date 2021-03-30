@@ -32,7 +32,7 @@ class Playlist(object):
 
 class Track(object):
 
-    def __init__(self, id, title, url, duration, filename):
+    def __init__(self, id: str, title: str, url: str, duration: typing.Any, filename: str):
         self.id = id
         self.title = title
         self.url = url

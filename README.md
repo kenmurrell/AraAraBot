@@ -5,18 +5,12 @@ An anime-themed discord bot for my buddy trident91
 ## Setup
 To setup the bot, run the following in bash (Git Bash on Win10)
 
-1) Setup ffmpeg and directories automatically:
+1) To download the **ffmpeg** drivers, create the directories and download the python requirements, run the following in bash:
 ```shell
 $ bash setup.sh
 ```
 
-2) Install python requirements:
-```shell
-$ pip3 install -r requirements.txt
-```
-
-3) Register the Discord bot on your server and add the access key to the `config.yaml` file. 
-   
+2) Register the Discord bot on your server and add the access key to the `config.yaml` file. 
 
 4) Run program:
 ```shell
@@ -34,4 +28,5 @@ $ python3 bot.py
 * `!pause`: pause/unpause the currently playing music.
 * `!uptime`: show the current uptime of the bot.
 * `!skip`: vote to skip the current track
+* `!kill`: kill the bot
 
