@@ -1,8 +1,9 @@
+import discord
 from discord.ext import commands
 from discord.ext.commands.context import Context
 from discord.ext.commands.bot import Bot
-import discord
 from datetime import datetime, timedelta
+import asyncio
 import logging
 import sys
 import os
@@ -25,6 +26,7 @@ class Meta(commands.Cog):
         self.bot = bot
         self.start_time = datetime.now()
         self.config = config
+        self.lock = asyncio.Lock()
 
     @commands.command(name="uptime", aliases=["u"], pass_context=True, usage=DOCS_UPTIME)
     async def uptime(self, ctx: Context):
@@ -36,13 +38,14 @@ class Meta(commands.Cog):
     async def kill(self, ctx: Context):
         user = ctx.message.author.name
         logger.info("{user} killed the bot".format(user=user))
-        voice_client = ctx.voice_client
         await ctx.send(content=self.config["MESSAGES"]["KILL"])
-        if voice_client:
-            voice_client.play(discord.FFmpegPCMAudio(SOUND_KILL), after=None)
-            while voice_client.is_playing():
-                # best way of doing this without clogging up threads in a loop
-                time.sleep(6)
-            await voice_client.disconnect()
+        if ctx.voice_client.is_connected():
+            async with self.lock:
+                ctx.voice_client.stop()
+                ctx.voice_client.play(discord.FFmpegPCMAudio(SOUND_KILL), after=None)
+                while ctx.voice_client.is_playing():
+                    # best way of doing this without clogging up threads in a loop
+                    time.sleep(6)
+            await ctx.voice_client.disconnect()
         await ctx.bot.logout()
         sys.exit(1)

@@ -1,42 +1,41 @@
-#AUTHENTICATION
-AUTH:
+
+#MAIN
+MAIN:
   TOKEN: "" ### ADD YOUR DISCORD KEY HERE!!! ###
-
-#META
-META:
   PREFIX: "!"
+
+#MUSIC
+MUSIC:
   SKIP_LIMIT: 2
-  PLAYLIST_LIMIT: 100
-
-#MESSAGES
-MESSAGES:
-  JOINING_VOICE: "Joining the {channel} channel... ＼(^ω^＼)"
-  LEAVING_VOICE: "Leaving the {channel} channel...（ミ￣ー￣ミ)"
-  PLAYING: "Playing... (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ \n{track}"
-  PAUSING: "Paused... (/ω＼)	"
-  RESUMING: "Resuming... °˖✧◝(⁰▿⁰)◜✧˖°	"
-  QUEUING: "Queuing... (>ω^) \n{track}"
-  CLEARING: "Clearing the queue... ( ╯°□°)╯ ┻━━┻"
-  ORG: "♡ σ(≧ε≦σ) ♡"
-  SKIP_REQUEST: "{user} requested a skip... ┐(￣∀￣)┌ ({status})"
-  SKIP_SUCCESS: "Skipping song... ┐('～`;)┌"
-  KILL: "(×_×)⌒☆"
-
-#ERRORS
-ERRORS:
-  USER_NOT_IN_VCHANNEL: "{user}-chan, baka! You're not in a voice channel! ( ╥ω╥ )"
-  BOT_NOT_IN_VCHANNEL: "{user}-chan, baka! I'm not in a voice channel! ( ╥ω╥ )"
-  PLAYING_INVALID_LINK: "{user}-chan, baka! I cannot play invalid youtube links! ( ╥ω╥ )"
-  NO_LINK_GIVEN: "{user}-chan, baka! You didn't give me a youtube link ( ╥ω╥ )"
-
-#YOUTUBE DOWNLOADER OPTIONS
-YD_DL_OPTS:
-  format: bestaudio/best
-  postprocessors:
-    - key: "FFmpegExtractAudio"
-      preferredcodec: "mp3"
-      preferredquality: "192"
-  "retries": 3
-  "restrict-filenames": True
-  "no-playlist": True
-  'quiet': False
+  QUEUE_LIMIT: 30
+  MESSAGES:
+    JOINING_VOICE: "Joining the {channel} channel... ＼(^ω^＼)"
+    LEAVING_VOICE: "Leaving the {channel} channel...（ミ￣ー￣ミ)"
+    PLAYING: "Playing... (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ \n{track}"
+    PAUSING: "Paused... (/ω＼)	"
+    RESUMING: "Resuming... °˖✧◝(⁰▿⁰)◜✧˖°	"
+    QUEUING: "Queuing for {user}... (>ω^) \n{track}"
+    CLEARING: "Clearing {size} songs from the queue... ( ╯°□°)╯ ┻━━┻"
+    ORG: "♡ σ(≧ε≦σ) ♡"
+    SKIP_REQUEST: "{user} requested a skip... ┐(￣∀￣)┌ ({status})"
+    SKIP_SUCCESS: "Skipping song... ┐('～`;)┌"
+    KILL: "(×_×)⌒☆"
+    QUEUE_EMPTY: "The queue is empty... (ಥ﹏ಥ)"
+    QUEUELIST_HEADER: "### SONGS IN THE QUEUE ###\n"
+    QUEUELIST_FOOTER: "	(ﾉ>ω<)ﾉ :｡･:*:･ﾟ’★,｡･:*:･ﾟ’☆ \n######################"
+  ERRORS:
+    USER_NOT_IN_VCHANNEL: "{user}-chan, baka! You're not in a voice channel! ( ╥ω╥ )"
+    BOT_NOT_IN_VCHANNEL: "{user}-chan, baka! I'm not in a voice channel! ( ╥ω╥ )"
+    PLAYING_INVALID_LINK: "{user}-chan, baka! I cannot play invalid youtube links! ( ╥ω╥ )"
+    NO_LINK_GIVEN: "{user}-chan, baka! I cannot play an empty queue! ( ╥ω╥ )"
+    YOUTUBE_NULL_ERROR: "Sumimasen {user}-chan! Youtube returned a null list! ( ╥ω╥ ) (Try again later!)"
+  YD_DL_OPTS:
+    format: bestaudio/best
+    noplaylist: True,
+    postprocessors:
+      - key: "FFmpegExtractAudio"
+        preferredcodec: "mp3"
+        preferredquality: "192"
+    "retries": 3
+    "restrict-filenames": True
+    'quiet': False

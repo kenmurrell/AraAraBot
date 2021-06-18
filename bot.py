@@ -25,7 +25,7 @@ cogs = [Music, Meta]
 config = None
 with open("config.yaml", encoding="utf-8") as configfile:
     config = yaml.load(configfile, Loader=yaml.FullLoader)
-bot = commands.Bot(command_prefix=config["META"]["PREFIX"])
+bot = commands.Bot(command_prefix=config["MAIN"]["PREFIX"])
 
 
 @bot.event
@@ -40,11 +40,11 @@ async def on_member_join(user):
 
 def run():
     for cog in cogs:
-        bot.add_cog(cog(bot, config))
-    if config["AUTH"]["TOKEN"] == "":
+        bot.add_cog(cog(bot, config["MUSIC"]))
+    if config["MAIN"]["TOKEN"] == "":
         logger.error("No token specified in the config.yaml file")
         raise ValueError("No token specified in the config.yaml file. Please specify a token.")
-    bot.run(config["AUTH"]["TOKEN"])
+    bot.run(config["MAIN"]["TOKEN"])
 
 
 if __name__ == "__main__":

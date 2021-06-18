@@ -6,3 +6,4 @@ PyNaCl==1.4.0
 pycparser==2.20
 async-timeout==3.0.1
 regex==2020.11.13
+PyYAML==5.4.1
