@@ -17,12 +17,12 @@ class Track(object):
             duration=timedelta(seconds=self.duration),
             id=self.id,
             title=self.title,
-            url=self.url)
+            url=self.url).encode("utf-8")
 
     def prettify(self):
         return "({duration})[{title}]".format(
             duration=timedelta(seconds=self.duration),
-            title=self.title)
+            title=self.title).encode("utf-8")
 
     def is_available(self):
         return os.path.isfile(self.filename)

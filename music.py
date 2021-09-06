@@ -157,6 +157,7 @@ class Music(commands.Cog):
                 await self.next_song_event.wait()
                 logger.info("vote limit reached, skipping song".format(user=user.name))
                 await ctx.send(content=self.config["MESSAGES"]["SKIP_SUCCESS"])
+                self.skip.clear()
 
     @commands.command(name="list", aliases=["x"], pass_context=True, usage=DOCS_LIST)
     async def list(self, ctx: Context):
@@ -184,7 +185,7 @@ class Music(commands.Cog):
                 raise commands.CommandError(err_text)
             else:
                 try:
-                    await ctx.author.voice.channel.connect()
+                    await ctx.author.voice.channel.connect(timeout=10, reconnect=False)
                     logger.info("{user} requested join {channel}".format(channel=user.voice.channel, user=user.name))
                     self.voice_client = ctx.voice_client
                 except commands.CommandError:
@@ -232,7 +233,8 @@ class Music(commands.Cog):
             source = discord.FFmpegPCMAudio(track.filename)
             async with self.lock:
                 if not self.voice_client.is_connected():
-                    await self.voice_client.connect()
+                    await self.voice_client.connect(timeout=10, reconnect=False)
+                self.skip.clear()
                 self.voice_client.play(
                     source,
                     after=lambda _: self.bot.loop.call_soon_threadsafe(self.next_song_event.set))
