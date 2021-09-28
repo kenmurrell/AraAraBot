@@ -3,10 +3,12 @@
 MAIN:
   TOKEN: "" ### ADD YOUR DISCORD KEY HERE!!! ###
   PREFIX: "!"
+  #Important: if you don't want to lock the bot to a single channel, leave this blank.
+  EXCL_CHANNEL: 
 
 #MUSIC
 MUSIC:
-  SKIP_LIMIT: 2
+  SKIP_LIMIT: 1
   QUEUE_LIMIT: 30
   MESSAGES:
     JOINING_VOICE: "Joining the {channel} channel... ＼(^ω^＼)"
