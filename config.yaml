@@ -19,6 +19,7 @@ MUSIC:
     QUEUING: "Queuing for {user}... (>ω^) \n{track}"
     CLEARING: "Clearing {size} songs from the queue... ( ╯°□°)╯ ┻━━┻"
     ORG: "♡ σ(≧ε≦σ) ♡"
+    EPIC: "	☆*:.｡.o(≧▽≦)o.｡.:*☆"
     SKIP_REQUEST: "{user} requested a skip... ┐(￣∀￣)┌ ({status})"
     SKIP_SUCCESS: "Skipping song... ┐('～`;)┌"
     KILL: "(×_×)⌒☆"

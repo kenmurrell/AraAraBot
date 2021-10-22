@@ -2,6 +2,7 @@ import asyncio
 import itertools
 import logging
 import os
+import random
 from collections import deque
 from typing import Dict, Any
 
@@ -23,6 +24,7 @@ DOCS_PAUSE = "-> pause/unpause the current song"
 DOCS_QUEUE = "-> queues up the given song"
 DOCS_CLEAR = "-> clears the queue"
 DOCS_ORG = "-> ( ͡° ͜ʖ ͡°)"
+DOCS_EPIC = "-> for epic events"
 DOCS_SKIP = "-> vote to skip the current song"
 DOCS_LIST = "-> list all the songs currently in the queue"
 
@@ -31,7 +33,9 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 DL_DIR = os.path.join(DIR_PATH, "downloads")
 SOUNDS_DIR = os.path.join(DIR_PATH, "sounds")
 SOUND_ARA_ARA = os.path.join(SOUNDS_DIR, "ara_ara.mp3")
-SOUND_ORG = os.path.join(SOUNDS_DIR, "org.mp3")
+SOUND_ORG1 = os.path.join(SOUNDS_DIR, "org.mp3")
+SOUND_ORG2 = os.path.join(SOUNDS_DIR, "grunt.mp3")
+SOUND_EPIC = os.path.join(SOUNDS_DIR, "epic.mp3")
 
 logger = logging.getLogger("bot")
 
@@ -62,12 +66,24 @@ class Music(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def org(self, ctx: Context):
         try:
+            sound = SOUND_ORG1 if random.uniform(0, 1) > 0.5 else SOUND_ORG2
             async with self.lock:  # abusing asyncio locks but shouldn't orgs break things?
-                ctx.voice_client.play(discord.FFmpegPCMAudio(SOUND_ORG), after=None)
+                ctx.voice_client.play(discord.FFmpegPCMAudio(sound), after=None)
             logger.info("{user} requested org".format(user=ctx.message.author.name))
             await ctx.send(content=self.config["MESSAGES"]["ORG"])
         except ClientException as ex:
             logger.error("Error requesting org: {err}".format(err=ex))
+
+    @commands.command(name="epic", aliases=["e"], pass_context=True, usage=DOCS_EPIC)
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def epic(self, ctx: Context):
+        try:
+            async with self.lock:
+                ctx.voice_client.play(discord.FFmpegPCMAudio(SOUND_EPIC), after=None)
+            logger.info("{user} requested epic".format(user=ctx.message.author.name))
+            await ctx.send(content=self.config["MESSAGES"]["EPIC"])
+        except ClientException as ex:
+            logger.error("Error requesting epic: {err}".format(err=ex))
 
     @commands.command(name="join", aliases=["j"], pass_context=True, usage=DOCS_JOIN)
     async def join(self, ctx: Context):
